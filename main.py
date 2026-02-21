@@ -41,8 +41,9 @@ gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 # --- 升級：定義「單一解釋」的格式 ---
 class Definition(BaseModel):
     pos: str
-    meaning: str
-    sentence: Optional[str] = "" # Optional 代表這是選填的(可為空)
+    meaning: str  # 這欄現在當作「簡短翻譯」
+    explanation: Optional[str] = ""  # ✨ 新增：詳細解釋與適當場合
+    sentence: Optional[str] = ""
 
 # --- 升級：定義「整張單字卡」的完整格式 ---
 class WordCard(BaseModel):
@@ -96,7 +97,8 @@ async def fetch_word_info(word: str):
         "definitions": [
             {{
                 "pos": "詞性縮寫，例如 n., v., adj., adv., phr.",
-                "meaning": "精準的繁體中文解釋",
+                "meaning": "精準且簡短的繁體中文翻譯 (例如：演算法、部署)",
+                "explanation": "詳細的中文解釋，以及說明這個字詞的「適當用法與適用場合」",
                 "sentence": "生活化、實用且道地的英文例句"
             }}
         ]
