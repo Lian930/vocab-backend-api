@@ -126,6 +126,13 @@ async def fetch_word_info(word: str):
 # 4. 寫一支 POST API，讓前端可以把單字存進資料庫
 @app.post("/api/words")
 async def create_word(card: WordCard):
+
+    existing_word = await collection.find_one({"word": {"$regex": f"^{card.word}$", "$options": "i"}})
+    
+    if existing_word:
+        # 🛑 這裡也要改成 card.word
+        raise HTTPException(status_code=400, detail=f"單字 '{card.word}' 已經在字庫裡囉！無法重複新增。")
+    
     word_dict = card.dict()
     # 寫入資料庫時，MongoDB 會自動產生 _id
     result = await collection.insert_one(word_dict)
