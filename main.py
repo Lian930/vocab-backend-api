@@ -47,13 +47,24 @@ class Definition(BaseModel):
 
 # --- 升級：定義「整張單字卡」的完整格式 ---
 class WordCard(BaseModel):
-    
     word: str
     ipa: Optional[str] = ""
-    definitions: List[Definition] # 這是一個陣列 (List)
+    definitions: List[Definition]
     dateAdded: str
-    level: int = 0
-    nextReview: int
+    
+    # ❌ 移除舊的 level 制
+    # level: int = 0 
+    
+    # ✅ 新增 FSRS 專屬的記憶參數 (預設值都先給 0)
+    state: int = 0           # 0=New, 1=Learning, 2=Review, 3=Relearning
+    stability: float = 0.0   # 記憶穩定度 (S)
+    difficulty: float = 0.0  # 難度 (D)
+    elapsed_days: int = 0    # 距離上次複習經過的天數
+    scheduled_days: int = 0  # 下次複習的間隔天數
+    reps: int = 0            # 總複習次數
+    lapses: int = 0          # 忘記(答錯)的總次數
+    
+    nextReview: int          # UNIX Timestamp (毫秒)
 # --------------------------------------
 
 @app.get("/")
@@ -74,8 +85,18 @@ async def get_words():
         # 清除可能殘留的舊 id 欄位
         if "id" in document and type(document["id"]) == int:
             del document["id"]
+            
+        # 🌟 FSRS 舊資料相容邏輯：如果這張卡片沒有 state 屬性，代表它是舊卡片，幫它補上 FSRS 預設值
+        if "state" not in document:
+            document["state"] = 0          # 0 代表 New
+            document["stability"] = 0.0
+            document["difficulty"] = 0.0
+            document["elapsed_days"] = 0
+            document["scheduled_days"] = 0
+            document["reps"] = 0
+            document["lapses"] = 0
+            
         words_list.append(document)
-    return words_list
         
     return words_list
 # --------------------------------
