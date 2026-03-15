@@ -67,6 +67,9 @@ class WordCard(BaseModel):
     nextReview: int          # UNIX Timestamp (毫秒)
 # --------------------------------------
 
+class BulkDeleteRequest(BaseModel):
+    ids: List[str]
+
 @app.get("/")
 def read_root():
     return {"message": "Hello, FastAPI 伺服器與資料庫已準備就緒！"}
@@ -180,3 +183,14 @@ async def delete_word(word_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="找不到這張單字卡")
     return {"message": "單字刪除成功！"}
+
+# 🌟 新增：批次刪除 API
+@app.post("/api/words/bulk-delete")
+async def bulk_delete_words(request: BulkDeleteRequest):
+    # 將前端傳來的字串 ID 轉換成 MongoDB 看得懂的 ObjectId
+    object_ids = [ObjectId(i) for i in request.ids]
+    
+    # 讓資料庫一次刪除所有符合這些 ID 的資料
+    result = await collection.delete_many({"_id": {"$in": object_ids}})
+    
+    return {"message": f"成功清除了 {result.deleted_count} 個單字！"}
